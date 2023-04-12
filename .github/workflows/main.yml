@@ -50,13 +50,17 @@ jobs:
       run: sudo cp kubeval /usr/local/bin
       
     # Validate deployment file
-    - name: Validate deploymeny file
+    - name: Validate deployment file
       run: kubeval --ignore-missing-schemas deployment.yml
       working-directory: ./config/
       
     # Generate short term credentials to kube
     - name: Save DigitalOcean kubeconfig with short-lived credentials for cluster helpchain
       run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 helpchain
+
+    # Create datadog secrets
+    - name: Create datadog secrets in the cluster
+      run: kubectl create secret generic datadog-secret --from-literal api-key=${{ DATADOG_API_KEY }} --from-literal app-key=${{ DATADOG_APP_KEY }}
     
     # Deploy the datadog config to the kube service
     - name: Deploy to DigitalOcean Kubernetes
