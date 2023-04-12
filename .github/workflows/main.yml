@@ -58,14 +58,19 @@ jobs:
     - name: Save DigitalOcean kubeconfig with short-lived credentials for cluster helpchain
       run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 helpchain
 
-    # Create datadog secrets
+    # Create datadog API key
     - name: Create datadog agent secrets in the cluster
-      run: kubectl create secret generic datadog-secret --from-literal api-key=${{ secrets.DATADOG_API_KEY }} --from-literal app-key=${{ secrets.DATADOG_APP_KEY }}
+      run: kubectl create secret generic datadog-secret --from-literal api-key=${{ secrets.DATADOG_API_KEY }}
       continue-on-error: true
 
-    # Create datadog auth secret
+    # Create datadog APP key
+    - name: Create datadog agent secrets in the cluster
+      run: kubectl create secret generic datadog-secret --from-literal app-key=${{ secrets.DATADOG_APP_KEY }}
+      continue-on-error: true
+    
+    # Create datadog AUTH key
     - name: Create datadog inter agent auth secret
-      run: kubectl create secret generic datadog-auth-token --from-literal=token=${{ secrets.DATADOG_AUTH_SECRET }}
+      run: kubectl create secret generic datadog-auth-token --from-literal token=${{ secrets.DATADOG_AUTH_SECRET }}
       continue-on-error: true
 
     # Create cluster-agent roles
@@ -75,10 +80,25 @@ jobs:
     # Create RBAC roles
     - name: Create kube RBAC roles
       run: kubectl apply -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/rbac.yaml"
+
+    # Add datadog helm repo
+    - name: Add Datadog Helm Repo
+      run: helm repo add datadog https://helm.datadoghq.com
+
+    # Run DataDog Helm Chart
+    - name: Run DataDog Helm Chart
+      run: helm install my-datadog-operator datadog/datadog-operator
     
-    # Deploy the datadog config to the kube service
+    # Deploy the datadog cluster agent to the kube service
     - name: Deploy to DigitalOcean Kubernetes
-      run: kubectl apply -f $GITHUB_WORKSPACE/config/deployment.yml
+      run: kubectl apply -f $GITHUB_WORKSPACE/config/datadog_cluster_agent.yml
+
+    # Deploy the datadog node agent to the kube service
+    - name: Deploy to DigitalOcean Kubernetes
+      run: kubectl apply -f $GITHUB_WORKSPACE/config/datadog_agent.yml
 
     - name: Verify deployment of deployment/datadog-cluster-agent
       run: kubectl rollout status deployment/datadog-cluster-agent
+
+    - name: Verify deployment of deployment/datadog-agent
+      run: kubectl rollout status deployment/datadog-agent
