@@ -61,6 +61,7 @@ jobs:
     # Create datadog secrets
     - name: Create datadog secrets in the cluster
       run: kubectl create secret generic datadog-secret --from-literal api-key=${{ secrets.DATADOG_API_KEY }} --from-literal app-key=${{ secrets.DATADOG_APP_KEY }}
+      continue-on-error: true
     
     # Deploy the datadog config to the kube service
     - name: Deploy to DigitalOcean Kubernetes
