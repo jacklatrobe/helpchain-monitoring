@@ -50,8 +50,13 @@ jobs:
       run: sudo cp kubeval /usr/local/bin
       
     # Validate deployment file
-    - name: Validate deployment file
-      run: kubeval --ignore-missing-schemas deployment.yml
+    - name: Validate datadog_agent.yml file
+      run: kubeval --ignore-missing-schemas datadog_agent.yml
+      working-directory: ./config/
+
+    # Validate deployment file
+    - name: Validate datadog_cluster_agent.yml file
+      run: kubeval --ignore-missing-schemas datadog_cluster_agent.yml
       working-directory: ./config/
       
     # Generate short term credentials to kube
