@@ -59,9 +59,22 @@ jobs:
       run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 helpchain
 
     # Create datadog secrets
-    - name: Create datadog secrets in the cluster
+    - name: Create datadog agent secrets in the cluster
       run: kubectl create secret generic datadog-secret --from-literal api-key=${{ secrets.DATADOG_API_KEY }} --from-literal app-key=${{ secrets.DATADOG_APP_KEY }}
       continue-on-error: true
+
+    # Create datadog auth secret
+    - name: Create datadog inter agent auth secret
+      run: kubectl create secret generic datadog-auth-token --from-literal=token=${{ secrets.DATADOG_AUTH_SECRET }}
+      continue-on-error: true
+
+    # Create cluster-agent roles
+    - name: Create kube cluster-agent roles
+      run: kubectl apply -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/cluster-agent-rbac.yaml"
+
+    # Create RBAC roles
+    - name: Create kube RBAC roles
+      run: kubectl apply -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/rbac.yaml"
     
     # Deploy the datadog config to the kube service
     - name: Deploy to DigitalOcean Kubernetes
