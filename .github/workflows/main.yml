@@ -80,11 +80,13 @@ jobs:
 
     # Create cluster-agent roles
     - name: Create kube cluster-agent roles
-      run: kubectl apply -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/cluster-agent-rbac.yaml"
+      run: kubectl create -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/cluster-agent-rbac.yaml"
+      continue-on-error: true
 
     # Create RBAC roles
     - name: Create kube RBAC roles
-      run: kubectl apply -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/rbac.yaml"
+      run: kubectl create -f "https://raw.githubusercontent.com/DataDog/datadog-agent/master/Dockerfiles/manifests/cluster-agent/rbac.yaml"
+      continue-on-error: true
 
     # Add datadog helm repo
     - name: Add Datadog Helm Repo
@@ -95,15 +97,22 @@ jobs:
       run: helm install my-datadog-operator datadog/datadog-operator
     
     # Deploy the datadog cluster agent to the kube service
-    - name: Deploy to DigitalOcean Kubernetes
+    - name: Deploy cluster agent to DigitalOcean Kubernetes
       run: kubectl apply -f $GITHUB_WORKSPACE/config/datadog_cluster_agent.yml
 
     # Deploy the datadog node agent to the kube service
-    - name: Deploy to DigitalOcean Kubernetes
+    - name: Deploy note agent to DigitalOcean Kubernetes
       run: kubectl apply -f $GITHUB_WORKSPACE/config/datadog_agent.yml
+
+    # Deploy the kube_state_metrics node agent to the kube service
+    - name: Deploy kube_state_metrics to DigitalOcean Kubernetes
+      run: kubectl apply -f $GITHUB_WORKSPACE/config/kube_state_metrics/
 
     - name: Verify deployment of deployment/datadog-cluster-agent
       run: kubectl rollout status deployment/datadog-cluster-agent
 
     - name: Verify deployment of deployment/datadog-agent
       run: kubectl rollout status deployment/datadog-agent
+
+    - name: Verify deployment of deployment/kube_state_metrics
+      run: kubectl rollout status deployment/kube_state_metrics
