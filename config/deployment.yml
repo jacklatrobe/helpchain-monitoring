@@ -15,8 +15,6 @@ spec:
     clusterAgent:
       image:
         name: gcr.io/datadoghq/cluster-agent:latest
-      collectEvents: true 
     nodeAgent:
       image:
         name: gcr.io/datadoghq/agent:latest
-      collectEvents: true
