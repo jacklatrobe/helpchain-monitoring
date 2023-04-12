@@ -1,0 +1,63 @@
+name: "Deploy Datadog to Digital Ocean Kube"
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  datadog:
+    name: 'datadog'
+    runs-on: ubuntu-latest
+    environment: production
+
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    # Checkout the repository to the GitHub Actions runner
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    # Install snap
+    - name: Snapcraft Action
+      uses: samuelmeuli/action-snapcraft@v2.1.1
+    
+    # Install Digital Ocean CLI
+    - name: Install doctl
+      uses: digitalocean/action-doctl@v2
+      with:
+        token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      
+    # Install Helm
+    - name: Install Helm
+      run: sudo snap install helm --classic
+      
+    # Download Kubeval
+    - name: Download Kubeval
+      run: wget https://github.com/instrumenta/kubeval/releases/latest/download/kubeval-linux-amd64.tar.gz
+      
+    # Extract Kubeval
+    - name: Extract Kubeval
+      run: tar xf kubeval-linux-amd64.tar.gz
+      
+    # Install Kubeval
+    - name: Install Kubeval
+      run: sudo cp kubeval /usr/local/bin
+      
+    # Validate deployment file
+    - name: Validate deploymeny file
+      run: kubeval --ignore-missing-schemas deployment.yml
+      working-directory: ./config/
+      
+    # Generate short term credentials to kube
+    - name: Save DigitalOcean kubeconfig with short-lived credentials for cluster helpchain
+      run: doctl kubernetes cluster kubeconfig save --expiry-seconds 600 helpchain
+    
+    # Deploy the datadog config to the kube service
+    - name: Deploy to DigitalOcean Kubernetes
+      run: kubectl apply -f $GITHUB_WORKSPACE/config/deployment.yml
