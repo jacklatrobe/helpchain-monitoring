@@ -91,10 +91,12 @@ jobs:
     # Add datadog helm repo
     - name: Add Datadog Helm Repo
       run: helm repo add datadog https://helm.datadoghq.com
+      continue-on-error: true
 
     # Run DataDog Helm Chart
     - name: Run DataDog Helm Chart
       run: helm install my-datadog-operator datadog/datadog-operator
+      continue-on-error: true
     
     # Deploy the datadog cluster agent to the kube service
     - name: Deploy cluster agent to DigitalOcean Kubernetes
